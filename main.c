@@ -1,8 +1,89 @@
 #include "main.h"
 
-int main(int argc, char **argv)
+/**
+ * sig_handler - checks if Ctrl C is pressed
+ * @sig_num: int
+ */
+void sig_handler(int sig_num)
 {
-    char *const args[] = {"/bin/ls", "-l", NULL};
-    execv(args[0], args);
-    return 0;
+	if (sig_num == SIGINT)
+	{
+		_puts("\n#cisfun$ ");
+	}
+}
+
+/**
+* _EOF - handles the End of File
+* @len: return value of getline function
+* @buff: buffer
+ */
+void _EOF(int len, char *buff)
+{
+	(void)buff;
+	if (len == -1)
+	{
+		if (isatty(STDIN_FILENO))
+		{
+			_puts("\n");
+			free(buff);
+		}
+		exit(0);
+	}
+}
+/**
+  * _isatty - verif if terminal
+  */
+
+void _isatty(void)
+{
+	if (isatty(STDIN_FILENO))
+		_puts("#cisfun$ ");
+}
+/**
+ * main - Shell
+ * Return: 0 on success
+ */
+
+int main(void)
+{
+	ssize_t len = 0;
+	char *buff = NULL, *value, *pathname, **arv;
+	size_t size = 0;
+	list_path *head = '\0';
+	void (*f)(char **);
+
+	signal(SIGINT, sig_handler);
+	while (len != EOF)
+	{
+		_isatty();
+		len = getline(&buff, &size, stdin);
+		_EOF(len, buff);
+		arv = split_str(buff, " \n");
+		if (!arv || !arv[0])
+			alx_execute(arv);
+		else
+		{
+			value = _getenv("PATH");
+			head = linkpath(value);
+			pathname = _which(arv[0], head);
+			f = checkbuild(arv);
+			if (f)
+			{
+				free(buff);
+				f(arv);
+			}
+			else if (!pathname)
+				alx_execute(arv);
+			else if (pathname)
+			{
+				free(arv[0]);
+				arv[0] = pathname;
+				alx_execute(arv);
+			}
+		}
+	}
+	free_list(head);
+	free_arv(arv);
+	free(buff);
+	return (0);
 }
