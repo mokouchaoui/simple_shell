@@ -4,7 +4,7 @@
 /**
  * split_str - splits a string and makes it an array of pointers to words
  * @str: the string to be split
- * @delim: the delimiter
+ * @dlmtr: the delimiter
  * Return: array of pointers to words
  */
 
