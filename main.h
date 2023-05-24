@@ -1,67 +1,51 @@
-#ifndef SHELL_H
-#define SHELL_H
+#ifndef MAIN_H
+#define MAIN_H
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <sys/wait.h>
+#include <unistd.h>
 #include <sys/types.h>
-#include <errno.h>
-#include <stddef.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
-#include <signal.h>
-
-int _putchar(char c);
-void _puts(char *str);
-int _strlen(char *s);
-char *_strdup(char *str);
-char *concat_all(char *name, char *sep, char *value);
-
-char **split_str(char *str, const char *delim);
-void alx_execute(char **argv);
-void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
-
 
 extern char **environ;
-
-/**
- * struct list_path - Linked list containing PATH directories
- * @dir: directory in path
- * @p: pointer to next node
- */
-typedef struct list_path
-{
-	char *dir;
-	struct list_path *p;
-} list_path;
+/*
+ * int _myhistory(info_t *info);
+int unset_alias(info_t *info, char *str);
+int set_alias(info_t *info, char *str);
+int print_alias(list_t *node);
+int _myalias(info_t *info);
 
 
-char *_getenv(const char *name);
-list_path *add_node_end(list_path **head, char *str);
-list_path *linkpath(char *path);
-char *_which(char *filename, list_path *head);
-
-/**
- * struct mybuild - pointer to function with corresponding buildin command
- * @name: buildin command
- * @func: alx_execute the buildin command
- */
-typedef struct mybuild
-{
-	char *name;
-	void (*func)(char **);
-} mybuild;
-
-void(*checkbuild(char **arv))(char **arv);
+int interactive(info_t *info);
+int is_delim(char c, char *delim);
+int _isalpha(int c);
 int _atoi(char *s);
-void alx_exit(char **arv);
-void env(char **arv);
-void _setenv(char **arv);
-void _unsetenv(char **arv);
 
-void free_arv(char **arv);
-void free_list(list_path *head);
 
+int _myexit(info_t *info);
+int _mycd(info_t *info);
+int _myhelp(info_t *info);
+*/
+
+int countwords(char *str);
+int num_space(char *str);
+char **parse(char *input);
+char *prompt(void);
+
+int execute(char *cmd, char **args);
+
+int _strcmp(char *s1, char *s2);
+char *_strcpy(char *dest, char *src);
+char *_strcat(char *dest, char *src);
+char *_strdup(char *str);
+int _putchar(char c);
+void _pstr(char *str);
+
+char *_getenv(char *name);
+char *locate(char *name);
+char *join_path(char sep, char *path1, char *path2);
+int file_exists(char *filepath);
 
 #endif

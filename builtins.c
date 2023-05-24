@@ -1,155 +1,71 @@
 #include "main.h"
 
 /**
- * alx_exit - exits the shell with or without a return of status n
- * @arv: array of words of the entered line
+ * parse - This function splits the input into arrays
+ * of words.
+ * @input: The string to be splited.
+ * Return: An array of words.
  */
-void alx_exit(char **arv)
+char **parse(char *input)
 {
-	int i, n;
+	char **tokens;
+	char *token, *dlim = " ";
+	int space, i = 0, numofwords;
 
-	if (arv[1])
+	numofwords = countwords(_strdup(input));
+	if (numofwords == 0)
+		return (NULL);
+	space = num_space(input);
+	tokens = malloc(sizeof(char *) * (space + 1));
+	if (tokens == NULL)
+		return (NULL);
+	token = strtok(input, dlim);
+	while (token != NULL)
 	{
-		n = _atoi(arv[1]);
-		if (n <= -1)
-			n = 2;
-		free_arv(arv);
-		exit(n);
-	}
-	for (i = 0; arv[i]; i++)
-		free(arv[i]);
-	free(arv);
-	exit(0);
-}
-
-/**
- * _atoi - converts a string into an integer
- *@s: pointer to a string
- *Return: the integer
- */
-int _atoi(char *s)
-{
-	int i, integer, sign = 1;
-
-	i = 0;
-	integer = 0;
-	while (!((s[i] >= '0') && (s[i] <= '9')) && (s[i] != '\0'))
-	{
-		if (s[i] == '-')
-		{
-			sign = sign * (-1);
-		}
+		tokens[i] = _strdup(token);
 		i++;
+		token = strtok(NULL, dlim);
 	}
-	while ((s[i] >= '0') && (s[i] <= '9'))
-	{
-		integer = (integer * 10) + (sign * (s[i] - '0'));
-		i++;
-	}
-	return (integer);
+	tokens[i] = NULL;
+
+	return (tokens);
 }
 
 /**
- * env - prints the current environment
- * @arv: array of arguments
+ * countwords - This function counts the number of word
+ * @str: The string to be processed.
+ * Return: The number of words.
  */
-void env(char **arv __attribute__ ((unused)))
+int countwords(char *str)
 {
+	int count = 0;
 
-	int i;
-
-	for (i = 0; environ[i]; i++)
+	while (*str)
 	{
-		_puts(environ[i]);
-		_puts("\n");
+		if (*str != ' ')
+			count += 1;
+		str += 1;
 	}
-
+	return (count);
 }
 
 /**
- * _setenv - Initialize a new environment variable, or modify an existing one
- * @arv: array of entered words
+ * num_space - This function calculate the
+ * number of space in a string.
+ * @str: The string to be checked.
+ * Return: The number of spaces plus 1.
  */
-void _setenv(char **arv)
+int num_space(char *str)
 {
-	int i, j, k;
+	int num = 0, i;
 
-	if (!arv[1] || !arv[2])
+	for (i = 0; str[i] != '\0'; i++)
 	{
-		perror(_getenv("_"));
-		return;
+		if (str[i] == ' ')
+			num += 1;
 	}
+	if (num == 0)
+		num += 1;
 
-	for (i = 0; environ[i]; i++)
-	{
-		j = 0;
-		if (arv[1][j] == environ[i][j])
-		{
-			while (arv[1][j])
-			{
-				if (arv[1][j] != environ[i][j])
-					break;
-
-				j++;
-			}
-			if (arv[1][j] == '\0')
-			{
-				k = 0;
-				while (arv[2][k])
-				{
-					environ[i][j + 1 + k] = arv[2][k];
-					k++;
-				}
-				environ[i][j + 1 + k] = '\0';
-				return;
-			}
-		}
-	}
-	if (!environ[i])
-	{
-
-		environ[i] = concat_all(arv[1], "=", arv[2]);
-		environ[i + 1] = '\0';
-
-	}
-}
-
-/**
- * _unsetenv - Remove an environment variable
- * @arv: array of entered words
- */
-void _unsetenv(char **arv)
-{
-	int i, j;
-
-	if (!arv[1])
-	{
-		perror(_getenv("_"));
-		return;
-	}
-	for (i = 0; environ[i]; i++)
-	{
-		j = 0;
-		if (arv[1][j] == environ[i][j])
-		{
-			while (arv[1][j])
-			{
-				if (arv[1][j] != environ[i][j])
-					break;
-
-				j++;
-			}
-			if (arv[1][j] == '\0')
-			{
-				free(environ[i]);
-				environ[i] = environ[i + 1];
-				while (environ[i])
-				{
-					environ[i] = environ[i + 1];
-					i++;
-				}
-				return;
-			}
-		}
-	}
+	return (num);
 }
