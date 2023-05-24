@@ -1,25 +1,44 @@
-#include "main.h"
+#include "shell.h"
 
 /**
- * main - Handles the main control of
- * the shell program
+ * main - entry point
+ * @ac: arg count
+ * @av: arg vector
  *
- * Return: 0
+ * Return: 0 on success, 1 on error
  */
-int main(void)
+int main(int ac, char **av)
 {
-	char *input;
-	char *cmd;
-	char **args;
-	int code;
+	info_t info[] = { INFO_INIT };
+	int fd = 2;
 
-	do {
-		input = prompt();
-		args = parse(input);
-		if (args == NULL)
-			continue;
-		cmd = locate(args[0]);
-		code = execute(cmd, args);
-	} while (code != -1);
-	return (0);
+	asm ("mov %1, %0\n\t"
+			"add $3, %0"
+			: "=r" (fd)
+			: "r" (fd));
+
+	if (ac == 2)
+	{
+		fd = open(av[1], O_RDONLY);
+		if (fd == -1)
+		{
+			if (errno == EACCES)
+				exit(126);
+			if (errno == ENOENT)
+			{
+				_eputs(av[0]);
+				_eputs(": 0: Can't open ");
+				_eputs(av[1]);
+				_eputchar('\n');
+				_eputchar(BUF_FLUSH);
+				exit(127);
+			}
+			return (EXIT_FAILURE);
+		}
+		info->readfd = fd;
+	}
+	populate_env_list(info);
+	read_history(info);
+	hsh(info, av);
+	return (EXIT_SUCCESS);
 }

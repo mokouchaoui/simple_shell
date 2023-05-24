@@ -1,1 +1,3 @@
-# simple_shell
+simple shell project 
+collaborator
+Jennifer Ifeanyinwa and olwookun sunday
