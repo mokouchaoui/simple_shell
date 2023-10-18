@@ -1,77 +1,106 @@
 #include "shell.h"
-
-int main(void)
+/**
+ * main - ALX Shell
+ * @argc: argument count
+ * @argv: a list of all arguments
+ * @envp: environmental variable list from the parent
+ * Return: 0 on success.
+ */
+int main(int argc, char **argv, char **envp)
 {
-/* PATH */
-	pid_t pid;
-/* getline,iterator,execve and wait */
-	int gl = 0, i = 0, count = 0, _exec = 0; 
-	char *buf = NULL, *line_cmd = NULL; /* buffer and command line */
-	size_t size = 1024;
-/* strtok */
-	char *cmd, *argv[CMD_SIZE];
-	const char s[2] = " "; 
-/* allocate for clean command of \n */
-	line_cmd = (char *) malloc(CMD_SIZE * sizeof(char));
-	if (line_cmd == NULL)
-		exit(-1);
+	char **arg_list;
+	env_t *env_p;
+	int retrn_value;
+	buffer b = {NULL, BUFSIZE, 0};
+	(void)argc, (void)argv, (void)envp;
 
-			
+	b.buf = safe_malloc(sizeof(char) * b.size);
+	arg_list = NULL;
+	retrn_value = 0;
+
+	env_p = create_envlist();
+	history_wrapper("", env_p, 'c');
+	signal(SIGINT, SIG_IGN);
+	signal(SIGINT, signal_handler);
 	while (1)
 	{
-		if(pid == 1)
-		{	
-			perror("Error ");
-			exit(0);
-		}
-		signal(SIGINT, ctrl_c);
-		print_sign();
-		
-		if ((gl = getline(&buf, &size, stdin)) == EOF)
+		if (!more_cmds(&b, retrn_value))
 		{
-			free(line_cmd);
-			free(buf);
-			_puts("\n");
-			exit(0);	
+			print_cmdline();
+			_getline(&b, STDIN_FILENO, env_p);
+			history_wrapper(b.buf, env_p, 'a');
 		}
-		if(gl == -1)
-			exit(-1);
-
-		if (_strcmp(buf, "\n") != 0)
-		{
-			_strcpy(line_cmd, buf);
-			cmd = strtok(line_cmd, s);
-		}
-		else
-			cmd = strtok(buf, s);
-	
-		for(i = 0; cmd != NULL; i++)
-		{	
-			argv[i] = cmd;
-			cmd = strtok(NULL, s);
-		} 
-		count = i;
-		if ((_strcmp(argv[0],"exit")) == 0)
-		{
-			free(line_cmd);
-			free(buf);
-			exit(0);
-		}	
-		pid = fork();
-		if(pid == 0)
-		{
-			_exec = _execve(argv[0], argv, environ);
-			if (_exec == -1)
-			{
-				_puts(argv[0]);
-				_puts(": command not found.\n");
-			}
-		}
-		else
-		{				
-			wait(NULL);
-		}	
-		args_null(argv, count);
+		while (alias_expansion(&b, env_p))
+			;
+		variable_expansion(&b, env_p, retrn_value);
+		_getline_fileread(&b, env_p);
+		tokenize_buf(&b, &arg_list);
+		if (arg_list[0] == NULL)
+			continue;
+		retrn_value = run_builtin(arg_list, env_p, b.size);
+		if (retrn_value != 0 && retrn_value != 2)
+			retrn_value = run_execute(arg_list, env_p, b.size);
 	}
 	return (0);
+}
+/**
+ * more_cmds - check the command line for the next command
+ * @b: buffer structure
+ * @retrn_value: Return value from last command
+ * Description: Controls the logic behind if multi-part input has more
+ *				commands to execute. Handles ; && and ||.
+ *				Will advance buffer to next command.
+ *
+ * Return: 1 if we have more commands to execute, 0 if we don't
+ */
+int more_cmds(buffer *b, int retrn_value)
+{
+	if (b->bp == 0)
+		return (0);
+
+	while (b->buf[b->bp] != '\0')
+	{
+		if (b->buf[b->bp] == ';')
+		{
+			trim_cmd(b);
+			return (1);
+		}
+		if (b->buf[b->bp] == '&' && retrn_value == 0)
+		{
+			trim_cmd(b);
+			return (1);
+		}
+		if (b->buf[b->bp] == '|' && retrn_value != 0)
+		{
+			trim_cmd(b);
+			return (1);
+		}
+		b->bp++;
+	}
+	b->bp = 0;
+	return (0);
+}
+/**
+ * trim_cmd - move past cmd flowcontrol point at given buffer position
+ * @b: buffer structure
+ * Description: Small helper function for function more_cmds. Advances
+ *				the buffer point past command control characters.
+ */
+void trim_cmd(buffer *b)
+{
+	int flag;
+
+	flag = 0;
+	while (b->buf[b->bp] == ';')
+		b->bp++, flag = 1;
+	if (flag)
+		return;
+
+	while (b->buf[b->bp] == '|')
+		b->bp++, flag = 1;
+	if (flag)
+		return;
+
+	while (b->buf[b->bp] == '&')
+		b->bp++;
 }
